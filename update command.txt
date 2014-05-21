@@ -2,5 +2,5 @@ Use this command to update the app -- this will prompt you for authentication so
 doesn't try to use the wrong Google Account! 
 Make sure you use "theplastics247@gmail.com" as the account
 
-> appcfg.py update --no_cookies ideatr/
+> appcfg.py update --no_cookies path_to_local_code/
 
