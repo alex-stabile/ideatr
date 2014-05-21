@@ -28,9 +28,9 @@
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
-<script src="//ideatr-theplastics.appspot.com/static/app.js"></script>
+<script src="//ideatr247.appspot.com/static/app.js"></script>
 
-<link rel="stylesheet" type="text/css" href="//ideatr-theplastics.appspot.com/static/app.css" />
+<link rel="stylesheet" type="text/css" href="//ideatr247.appspot.com/static/app.css" />
 <div id="topBar">
 <h1 id="title">Phase 1: Brainstorm Ideas</h1>
 <h1 id="currentIdea"></h1>

@@ -13,7 +13,7 @@
 * License for the specific language governing permissions and limitations under
 * the License.
 */
-var serverPath = '//ideatr-theplastics.appspot.com/';
+var serverPath = '//ideatr247.appspot.com/';
 var userTotalVotes = 0;
 var voteCap = 5; 
 
