@@ -106,6 +106,42 @@ function countButtonClick() {
   gapi.hangout.data.submitDelta({'count': value});
 }
 
+function promptButtonClick() {
+  // Note that if you click the button several times in succession,
+  // if the state update hasn't gone through, it will submit the same
+  // delta again.  The hangout data state only remembers the most-recent
+  // update.
+  console.log('Prompt button clicked.');
+  
+  var randNum = Math.floor(Math.random() * (10));
+
+  var newText = '';
+
+  if (randNum === 0) {
+    newText = 'Come up with twenty new ideas, as fast as you can!';
+  } else if (randNum === 1) {
+    newText = 'Come up with as many ideas as you can in the next thirty seconds!';
+  } else if (randNum === 2) {
+    newText = 'Add some unrealistic ideas!';
+  } else if (randNum === 3) {
+    newText = 'Add some terrible ideas!';
+  } else if (randNum === 4) {
+    newText = 'Combine two ideas you already have!';
+  } else if (randNum === 5) {
+    newText = 'Expand on someone else\'s idea that you like!';
+  } else if (randNum === 6) {
+    newText = 'Do most of your ideas have something in common? Step outside that box!';
+  } else if (randNum === 7) {
+    newText = 'Come up with ten new ideas each, as fast as you can!';
+  } else if (randNum === 8) {
+    newText = 'Come up with as many ideas as you can in the next twenty seconds!';
+  } else if (randNum === 9) {
+    newText = 'Stand up, stretch, then come up with five new ideas!';
+  }
+
+  gapi.hangout.data.submitDelta({'prompt': newText});
+}
+
 function assignCategoryToIdea(category, ideaName) {
   var ideasList = document.getElementById('count');
   ideasList = ideasList.childNodes;
@@ -353,25 +389,40 @@ function updateStateUi(state) {
 
   if (!statePhase) {
     var button = document.getElementById('phaseButton');
-    button.value = 'Start Discussion';
+    button.value = 'Next (Discuss)';
     var title = document.getElementById('title');
-    setText(title, 'Phase 1: Brainstorm ideas');
+    setText(title, 'Phase 1: Brainstorm');
 
+    var tipBox = document.getElementById('tipBox');
+    if (!state['count']) {
+      tipBox.innerHTML = 'Add as many ideas as you can, as quickly as you can! --->';
+    } else {
+      if (!state['prompt']) {
+        tipBox.innerHTML = 'Need help? <input type=button value="Get a prompt" id="promptButton" onClick="promptButtonClick()"/>';
+        } else {
+          tipBox.innerHTML = state['prompt'] + ' <input type=button value="Get a new prompt" id="promptButton" onClick="promptButtonClick()"/>';
+        }
+      
+    }
   } else if (statePhase === 1) {
     var button = document.getElementById('phaseButton');
-    button.value = 'Start Voting';
+    button.value = 'Next (Vote)';
     var title = document.getElementById('title');
-    setText(title, 'Phase 2: Discussion');
+    setText(title, 'Phase 2: Discuss');
     var currentIdea = document.getElementById('currentIdea');
     currentIdea.style.border = "1px solid black";
+    var tipBox = document.getElementById('tipBox');
     if (!state['currentIdea']) {
       setText(currentIdea, 'Click on an idea to discuss!');
       var notePanel = document.getElementById('notePanel');
       notePanel.style.visibility = 'hidden';
+      tipBox.style.visibility = '';
+      tipBox.innerHTML = 'Discuss your ideas! If you want to categorize or take notes on an idea, click it.';
     } else {
       setText(currentIdea, state['currentIdea']);
       var notePanel = document.getElementById('notePanel');
       notePanel.style.visibility = '';
+      tipBox.style.visibility = 'hidden';
     }
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#E1FFCA";
@@ -439,7 +490,7 @@ function updateStateUi(state) {
     var button = document.getElementById('phaseButton');
     button.value = 'Done';
     var title = document.getElementById('title');
-    setText(title, 'Phase 3: Vote on your ideas!');
+    setText(title, 'Phase 3: Vote');
     var countButton = document.getElementById('countButton');
     var inputField = document.getElementById('inputField');
     var currentIdea = document.getElementById('currentIdea');
@@ -458,6 +509,15 @@ function updateStateUi(state) {
 
     var sideBarDiv = document.getElementById('categoryAndNotes');
     sideBarDiv.style.visibility = 'hidden';
+
+    var tipBox = document.getElementById('tipBox');
+    if (!state['votes']) {
+      tipBox.innerHTML = 'Click on an idea to vote for it! You get five votes, and only you will be able to see them.';
+      tipBox.style.visibility = '';
+    } else {
+      tipBox.style.visibility = 'hidden';
+    }
+
     // you're done... final report
   } else if (statePhase === 3){
     var topBar = document.getElementById('topBar');

@@ -32,19 +32,17 @@
 
 <link rel="stylesheet" type="text/css" href="//ideatr247.appspot.com/static/app.css" />
 <div id="topBar">
-<h1 id="title">Phase 1: Brainstorm Ideas</h1>
-
+<h1 id="title">Phase 1: Brainstorm</h1>
+<div id="tipBox"></div>
 <div style="padding-right: 10px; position: absolute; top: 20px; right: 20px;">
     <ul>
       <input type=text id="inputField" onkeydown="if (event.keyCode == 13) document.getElementById('countButton').click()">
       <input type=button value="Add Idea" id="countButton"
           onClick="countButtonClick()"/>
-      <input type=button value="Sort Ideas" id="sortButton"
-          onClick="sortButtonClick()"/>
     </ul>
     <ul>
       Participants: <span id="participants"></span>
-      <input type=button value="Start Discussion" id="phaseButton"
+      <input type=button value="Next (Discuss)" id="phaseButton"
           onClick="phaseButtonClick()"/>
     </ul>
   </div>
@@ -67,7 +65,9 @@
   <div id="categoryAndNotes" style="visibility: hidden;">
     <div id="categoryPanel" style="height: 175px; border-bottom: 1px solid #EEE; overflow: auto; padding-left:15px; padding-right: 15px;">
       <p id="currentIdea" style="text-align: center;"></p>
-      <p>Categories</p>
+      <p class="sideBarHeader" style="float:left;">Categories </p><input style="float: right; margin-top: 5px;" type=button value="Sort Ideas" id="sortButton"
+          onClick="sortButtonClick()"/>
+          <div style="clear: both;"></div>
         <ol>
           <li class="bigIdea1" id="category1Key"><input type=text id="category1" onkeydown="if (event.keyCode == 13) document.getElementById('category1Button').click()"><input type=button value="Add" id="category1Button"
           onClick="categoryButton1Click()"/></li>
@@ -84,7 +84,7 @@
         </ol>
     </div>
     <div id="notePanel" style="height: 160px; padding-left: 15px; padding-right: 15px; overflow: auto;">
-      <p>Notes</p>
+      <p class="sideBarHeader">Notes</p>
       <div id="noteDisplay" style="overflow: auto; height: 80px;"></div>
       <input type=text id="noteInputField" onkeydown="if (event.keyCode == 13) document.getElementById('addNoteButton').click()">
       <input type=button value="Add Note" id="addNoteButton"

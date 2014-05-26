@@ -29,9 +29,37 @@
 	overflow: hidden;
 }
 
+#tipBox {
+	border: 1px solid black;
+	width: 240px;
+  	display: block;
+ 	margin-left: auto;
+ 	margin-right: auto;
+ 	margin-top: 10px;
+	padding: 20px 20px;
+}
+
 #currentIdea {
-	margin-left:auto;
-	margin-right:auto;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 0px;
+	margin-top: 5px;
+}
+
+.sideBarHeader {
+	margin-bottom: 2px;
+	margin-top: 5px;
+}
+
+#categoryAndNotes ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+#categoryAndNotes ol {
+	margin-top: 0px;
+	margin-bottom: 0px;
 }
 
 h1 { 
