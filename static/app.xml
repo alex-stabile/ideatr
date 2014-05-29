@@ -23,22 +23,23 @@
 <!-- The hangout API JavaScript. Always include this first -->
 <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 
-
 <!-- The JavaScript for this app. This must always be a full URL not a
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
-<script src="//ideatr247.appspot.com/static/app.js"></script>
+<script src="//ideatr2472.appspot.com/static/jquery.js"></script>
+<script src="//ideatr2472.appspot.com/static/jquery-ui-1.10.4.custom.js"></script>
+<script src="//ideatr2472.appspot.com/static/app.js"></script>
 
-<link rel="stylesheet" type="text/css" href="//ideatr247.appspot.com/static/app.css" />
+<link rel="stylesheet" type="text/css" href="//ideatr2472.appspot.com/static/app.css" />
 <div id="topBar">
 <h1 id="title">Phase 1: Brainstorm</h1>
 <div id="tipBox"></div>
 <div style="padding-right: 10px; position: absolute; top: 20px; right: 20px;">
     <ul>
-      <input type=text id="inputField" onkeydown="if (event.keyCode == 13) document.getElementById('countButton').click()">
-      <input type=button value="Add Idea" id="countButton"
-          onClick="countButtonClick()"/>
+      <input type=text id="inputField" onkeydown="if (event.keyCode == 13) document.getElementById('addIdeaButton').click()">
+      <input type=button value="Add Idea" id="addIdeaButton"
+          onClick="addIdeaButtonClick()"/>
     </ul>
     <ul>
       Participants: <span id="participants"></span>
@@ -51,16 +52,16 @@
 <div>
   <div style="float: left; padding: 0px 20px; border-right: 1px solid #EEE; overflow:auto; width: 75%;">
     <dl>
-      <!-- <dt>Ideas:</dt> -->
-      <div style="-webkit-column-count: 4; -webkit-column-width:250px; height: 300px; word-wrap: break-word; overflow: auto;">
-      <ul id="ideas">
-        <dd id="count"></dd>
-      </ul>
-    </div>
-      <!-- <dt>Participants:</dt>
-      <dd id="participants"></dd> -->
+      <div id="ideasPane">
+        <ul id="ideasList1" class="ideasPaneList">
+          <dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>
+        </ul>
+      </div>
+      <dd id="participants"></dd>
     </dl>
   </div>
+
+<!--
 
   <div id="categoryAndNotes" style="visibility: hidden;">
     <div id="categoryPanel" style="height: 175px; border-bottom: 1px solid #EEE; overflow: auto; padding-left:15px; padding-right: 15px;">
@@ -91,17 +92,11 @@
           onClick="addNoteButtonClick()"/>
     </div>
   </div>
+
+-->
+
 </div>
 
-<!-- <div style="float: left; padding: 0px 20px">
-  <p>Fetch some JSON from main.py</p>
-  <dl>
-    <dt>Message:</dt>
-    <dd id="message"></dd>
-  </dl>
-  <input type=button value="Get Message" id="getMessageButton"
-      onClick="getMessageClick()"/>
-</div> -->
 <div style="clear: both;"></div>
 
 ]]></Content>

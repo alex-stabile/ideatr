@@ -13,9 +13,13 @@
 * License for the specific language governing permissions and limitations under
 * the License.
 */
-var serverPath = '//ideatr247.appspot.com/';
+var serverPath = '//ideatr2472.appspot.com/';
 var userTotalVotes = 0;
 var voteCap = 5; 
+
+var numIdeasPerColumn = 11;
+var draggingIdeaId = null;
+var lastUiUpdateTime = 0;
 
 function phaseButtonClick() {
   var phase = parseInt(gapi.hangout.data.getState()['phase']);
@@ -82,28 +86,60 @@ function arrayFromListItemString(str) {
   return arr;
 }
 
-// Actually invoked when the user clicks "Add Idea"
-function countButtonClick() {
+function addIdeaButtonClick() {
   // Note that if you click the button several times in succession,
   // if the state update hasn't gone through, it will submit the same
   // delta again.  The hangout data state only remembers the most-recent
   // update.
   console.log('Add idea button clicked.');
   var value = '';
-  var count = gapi.hangout.data.getState()['count'];
+
   var newText = document.getElementById('inputField').value;
   document.getElementById('inputField').value = '';
-  if (count) {
-    value = count + '<li class="idea" onClick="expandIdeaClick()">' + newText + '</li>';
-  } else {
-    value = '<li class="idea" onClick="expandIdeaClick()">' + newText + '</li>';
-  }
-  
 
-  console.log('New count is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'count': value});
+  var ideasList = gapi.hangout.data.getState()['ideas'];
+  if (ideasList) {
+    ideasList = JSON.parse(ideasList);
+    ideasList.push(newText);
+  } else {
+    ideasList = [newText];
+  }
+  console.log('New ideasList is ' + ideasList);
+
+  if (ideasList.length === 1) {
+    $("#ideasList1").empty(); //make sure there's nothing hanging around
+  }
+  var lists = $("#ideasPane").children();
+  curList = $("#ideasList" + lists.length); //get the proper list to put the new idea in
+  var children = curList.children();
+  var startIndex = 0; //in ideasList
+  if ( children ) {
+    startIndex = children.length + (lists.length - 1) * numIdeasPerColumn;
+  }
+  for (var i = startIndex; i < ideasList.length; i++)  {
+    var ideaText = ideasList[i];
+    console.log(ideaText);
+    var item = document.createElement('li');
+    item.innerHTML = ideaText;
+    item.className = 'idea';
+    item.id = 'i' + i;  //its position in the list...guaranteed to be unique! :)
+    curList.append(item);
+    $( '#' + item.id ).click( expandIdeaClick );
+    var phase = gapi.hangout.data.getState()['phase'];
+    if ( phase ) phase = parseInt(phase);
+    if ( phase === 1 ) {
+      console.log('\tyes');
+      $( '#' + item.id ).draggable({
+        start: dragStart,
+        stop: dragStop
+      });
+    }
+  }
+  //is this the right place for this?
+  var ideasPane = document.getElementById('ideasPane');
+  ideasPane.scrollTop = ideasPane.scrollHeight;
+  
+  gapi.hangout.data.submitDelta({ 'ideas': JSON.stringify(ideasList), 'ideasPaneHtml': $("#ideasPane").html() });
 }
 
 function promptButtonClick() {
@@ -141,142 +177,7 @@ function promptButtonClick() {
 
   gapi.hangout.data.submitDelta({'prompt': newText});
 }
-
-function assignCategoryToIdea(category, ideaName) {
-  var ideasList = document.getElementById('count');
-  ideasList = ideasList.childNodes;
-  for (var i = 0; i < ideasList.length; i++) {
-    var elem = ideasList[i];
-    if (elem.innerHTML === ideaName) {
-      elem.className = category;
-    }
-  }
-}
-
-function categoryButton1Click() {
-  // Note that if you click the button several times in succession,
-  // if the state update hasn't gone through, it will submit the same
-  // delta again.  The hangout data state only remembers the most-recent
-  // update.
-  console.log('Category 1 button clicked.');
-  var inputCategory = document.getElementById('category1');
-  var value = inputCategory.value;
-  console.log('New category is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'category1': value});
-}
-
-function categoryChooseButton1Click() {
-  console.log('category 1 chosen');
-  var chosenIdea = gapi.hangout.data.getState()['currentIdea'];
-  assignCategoryToIdea('bigIdea1', chosenIdea);
-  gapi.hangout.data.submitDelta({'count': document.getElementById('count').innerHTML});
-}
-
-function categoryButton2Click() {
-  // Note that if you click the button several times in succession,
-  // if the state update hasn't gone through, it will submit the same
-  // delta again.  The hangout data state only remembers the most-recent
-  // update.
-  console.log('Category 2 button clicked.');
-  var inputCategory = document.getElementById('category2');
-  var value = inputCategory.value;
-  console.log('New category is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'category2': value});
-}
-
-function categoryChooseButton2Click() {
-  console.log('category 2 chosen');
-  var chosenIdea = gapi.hangout.data.getState()['currentIdea'];
-  assignCategoryToIdea('bigIdea2', chosenIdea);
-  gapi.hangout.data.submitDelta({'count': document.getElementById('count').innerHTML});
-}
-
-function categoryButton3Click() {
-  // Note that if you click the button several times in succession,
-  // if the state update hasn't gone through, it will submit the same
-  // delta again.  The hangout data state only remembers the most-recent
-  // update.
-  console.log('Category 3 button clicked.');
-  var inputCategory = document.getElementById('category3');
-  var value = inputCategory.value;
-  console.log('New category is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'category3': value});
-}
-
-function categoryChooseButton3Click() {
-  console.log('category 3 chosen');
-  var chosenIdea = gapi.hangout.data.getState()['currentIdea'];
-  assignCategoryToIdea('bigIdea3', chosenIdea);
-  gapi.hangout.data.submitDelta({'count': document.getElementById('count').innerHTML});
-}
-
-function categoryButton4Click() {
-  // Note that if you click the button several times in succession,
-  // if the state update hasn't gone through, it will submit the same
-  // delta again.  The hangout data state only remembers the most-recent
-  // update.
-  console.log('Category 4 button clicked.');
-  var inputCategory = document.getElementById('category4');
-  var value = inputCategory.value;
-  console.log('New category is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'category4': value});
-}
-
-function categoryChooseButton4Click() {
-  console.log('category 4 chosen');
-  var chosenIdea = gapi.hangout.data.getState()['currentIdea'];
-  assignCategoryToIdea('bigIdea4', chosenIdea);
-  gapi.hangout.data.submitDelta({'count': document.getElementById('count').innerHTML});
-}
-
-function categoryButton5Click() {
-  // Note that if you click the button several times in succession,
-  // if the state update hasn't gone through, it will submit the same
-  // delta again.  The hangout data state only remembers the most-recent
-  // update.
-  console.log('Category 5 button clicked.');
-  var inputCategory = document.getElementById('category5');
-  var value = inputCategory.value;
-  console.log('New category is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'category5': value});
-}
-function categoryChooseButton5Click() {
-  console.log('category 5 chosen');
-  var chosenIdea = gapi.hangout.data.getState()['currentIdea'];
-  assignCategoryToIdea('bigIdea5', chosenIdea);
-  gapi.hangout.data.submitDelta({'count': document.getElementById('count').innerHTML});
-}
-
-function categoryButton6Click() {
-  // Note that if you click the button several times in succession,
-  // if the state update hasn't gone through, it will submit the same
-  // delta again.  The hangout data state only remembers the most-recent
-  // update.
-  console.log('Category 6 button clicked.');
-  var inputCategory = document.getElementById('category6');
-  var value = inputCategory.value;
-  console.log('New category is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-  gapi.hangout.data.submitDelta({'category6': value});
-}
-function categoryChooseButton6Click() {
-  console.log('category 6 chosen');
-  var chosenIdea = gapi.hangout.data.getState()['currentIdea'];
-  assignCategoryToIdea('bigIdea6', chosenIdea);
-  gapi.hangout.data.submitDelta({'count': document.getElementById('count').innerHTML});
-}
-
+/*
 function addNoteButtonClick() {
   console.log('Add note button clicked.');
   var inputNote = document.getElementById('noteInputField');
@@ -298,6 +199,7 @@ function addNoteButtonClick() {
     }
   gapi.hangout.data.submitDelta({'notes': JSON.stringify(notes)});
 }
+*/
 
 // var forbiddenCharacters = /[^a-zA-Z!0-9_\- ]/;
 var forbiddenCharacters = "";
@@ -307,37 +209,39 @@ function setText(element, text) {
       '';
 }
 
-function expandIdeaClick() {
+function expandIdeaClick( event ) {
+  console.log('idea clicked');
   var phase = parseInt(gapi.hangout.data.getState()['phase']);
   var idea = event.target;
 
   if (phase === 1) {
-    if (!idea.style.fontSize) {
-      idea.style.fontSize = '110%';
-    } else if (idea.style.fontSize === '110%') {
-      idea.style.fontSize = '120%';
-    } else if (idea.style.fontSize === '120%') {
-      idea.style.fontSize = '130%';
-    } else if (idea.style.fontSize === '130%') {
-      idea.style.fontSize = '140%';
-    } else if (idea.style.fontSize === '140%') {
-      idea.style.fontSize = '150%';
-    } else if (idea.style.fontSize === '150%') {
-      idea.style.fontSize = '160%';
-    } else if (idea.style.fontSize === '160%') {
-      idea.style.fontSize = '170%';
+    var selector = '#' + event.target.id;
+    if ( $( selector ).hasClass('bigIdea1')) {
+      $( selector ).removeClass('bigIdea1');
+      $( selector ).addClass('bigIdea2');
+    } else if ( $( selector ).hasClass('bigIdea2')) {
+      $( selector ).removeClass('bigIdea2');
+      $( selector ).addClass('bigIdea3');
+    } else if ( $( selector ).hasClass('bigIdea3')) {
+      $( selector ).removeClass('bigIdea3');
+      $( selector ).addClass('bigIdea4');
+    } else if ( $( selector ).hasClass('bigIdea4')) {
+      $( selector ).removeClass('bigIdea4');
+      $( selector ).addClass('bigIdea5');
+    } else if ( $( selector ).hasClass('bigIdea5')) {
+      $( selector ).removeClass('bigIdea5');
+      $( selector ).addClass('bigIdea6');
+    } else if ( $( selector ).hasClass('bigIdea6')) {
+      $( selector ).removeClass('bigIdea6');
+      $( selector ).addClass('bigIdea1');
+    } else {
+      $( selector ).addClass('bigIdea1');
     }
-
-    console.log(idea.innerHTML);
     
-    var ideaList = event.target.parentNode.innerHTML;
-    ideaList.replace("\"", "\\\"");
+    gapi.hangout.data.submitDelta({ 'currentIdea': idea.innerHTML, 'ideasPaneHtml': $("#ideasPane").html() });
 
-    gapi.hangout.data.submitDelta({'currentIdea': idea.innerHTML});
-
-    gapi.hangout.data.submitDelta({'count': ideaList});
   } else if (phase === 2 && userTotalVotes < voteCap) {
-    userTotalVotes ++;
+    userTotalVotes++;
     var votes = gapi.hangout.data.getState()['votes'];
     if (!votes) votes = {};
     else votes = JSON.parse(votes);
@@ -346,7 +250,6 @@ function expandIdeaClick() {
     if (strippedIdea.indexOf("*") >= 0) strippedIdea = strippedIdea.substr(0,strippedIdea.indexOf("*"));
     console.log(strippedIdea);
     if (votes[strippedIdea]) {
-      //if (votes[strippedIdea] > 4) return;
       votes[strippedIdea] = votes[strippedIdea] + 1;
     } else {
       votes[strippedIdea] = 1;
@@ -375,18 +278,95 @@ function getMessageClick() {
   http.send();
 }
 
-function updateStateUi(state) {
-  var countElement = document.getElementById('count');
-  var stateCount = state['count'];
-  var statePhase = parseInt(state['phase']);
-  console.log('Phase:' + statePhase);
 
-  if (!stateCount) {
-    setText(countElement, 'YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!');
-  } else if (!statePhase || statePhase < 2) {
-    setText(countElement, stateCount.toString());
+$( document ).ready(function() {
+    console.log("Document ready (JQuery working)");
+});
+
+function dragStart( event, ui ) {
+  console.log('dragging started: ', event.target.id);
+  draggingIdeaId = event.target.id;
+  selector = "#" + event.target.id;
+  $( selector ).draggable( "option", "disabled", true );
+  $( selector ).unbind( "click", expandIdeaClick ); //temporarily, so dragging doesn't trigger the click
+  updateHtml();
+}
+
+//useful example?
+//console.log('\t', $('#'+event.target.id)[0].outerHTML);
+function dragStop( event, ui ) {
+  console.log('dragging stopped: ', event.target.id);
+  draggingIdeaId = null;
+  var selector = "#" + event.target.id;
+  $( selector ).draggable( "option", "disabled", false );
+  updateHtml();
+  $( selector ).click( expandIdeaClick );  //unbound when we started the drag
+}
+
+function updateHtml() {
+  gapi.hangout.data.submitDelta({ 'ideasPaneHtml': $("#ideasPane").html() })
+}
+
+function updateStateUi(state) {
+  lastUiUpdateTime = (new Date()).getTime();
+  console.log('*** updateStateUi called');
+  var statePhase = parseInt(state['phase']);
+
+  if ( !statePhase || statePhase < 2 ) {
+    //Update ideas pane view:
+    var newHtmlStr = state['ideasPaneHtml'];
+    if ( newHtmlStr ) {
+      var parsedHtml = $.parseHTML(newHtmlStr);
+      parsedHtml = parsedHtml[1];
+      if (parsedHtml.id != 'ideasList1') {
+        console.log('ERROR: bad HTML received in updateStateUi');
+      }
+      console.log( 'Received new Html: ', parsedHtml );
+      var nodes = parsedHtml.childNodes;
+      for (var i = 0; i < nodes.length; i++ ) {
+        var item = nodes[i];
+        var id = item.attributes['id'].value;
+        if ( draggingIdeaId === id ) {  //don't mess with this! (user is dragging it)
+          continue;
+        }
+        var oldItem = document.getElementById( id );
+        var selector = '#' + id;
+        if ( oldItem ) {  //something was modified
+          oldItem.className = item.attributes['class'].value;
+          if ( item.attributes['style'] ) {
+            oldItem.style.cssText = item.attributes['style'].value;
+          }
+          oldItem.innerHTML = item.innerHTML; //just in case
+          if ($( selector ).hasClass('ui-draggable-disabled')) {
+            $( selector ).draggable( "option", "disabled", true );
+          } else if ( $( selector ).hasClass('ui-draggable') ) {
+            $( selector ).draggable( "option", "disabled", false );
+          }
+        } else {    //something was added
+          var ideasList = JSON.parse(state['ideas']);
+          if (ideasList.length === 1) {
+            $("#ideasList1").empty(); //make sure there's nothing hanging around
+          }
+          $("#ideasList1").append(item);
+          $( selector ).click( expandIdeaClick );
+        }
+      }
+      if ( statePhase ) {
+        console.log('**making everything draggable');
+        $( '.idea' ).draggable({
+          start: dragStart,
+          stop: dragStop
+        });
+      }
+    } else { 
+      $("#ideasList1").empty();
+      $("#ideasList1").html('<dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>');
+    }
   }
 
+  //update other stuff:
+  
+  console.log('Phase:' + statePhase);
   if (!statePhase) {
     var button = document.getElementById('phaseButton');
     button.value = 'Next (Discuss)';
@@ -394,96 +374,30 @@ function updateStateUi(state) {
     setText(title, 'Phase 1: Brainstorm');
 
     var tipBox = document.getElementById('tipBox');
-    if (!state['count']) {
+    if (!state['ideas']) {
       tipBox.innerHTML = 'Add as many ideas as you can, as quickly as you can! --->';
     } else {
       if (!state['prompt']) {
         tipBox.innerHTML = 'Need help? <input type=button value="Get a prompt" id="promptButton" onClick="promptButtonClick()"/>';
-        } else {
-          tipBox.innerHTML = state['prompt'] + ' <input type=button value="Get a new prompt" id="promptButton" onClick="promptButtonClick()"/>';
-        }
-      
+      } else {
+        tipBox.innerHTML = state['prompt'] + ' <input type=button value="Get a new prompt" id="promptButton" onClick="promptButtonClick()"/>';
+      }
     }
   } else if (statePhase === 1) {
     var button = document.getElementById('phaseButton');
     button.value = 'Next (Vote)';
     var title = document.getElementById('title');
     setText(title, 'Phase 2: Discuss');
-    var currentIdea = document.getElementById('currentIdea');
-    currentIdea.style.border = "1px solid black";
+    
     var tipBox = document.getElementById('tipBox');
     if (!state['currentIdea']) {
-      setText(currentIdea, 'Click on an idea to discuss!');
-      var notePanel = document.getElementById('notePanel');
-      notePanel.style.visibility = 'hidden';
+      tipBox.innerHTML = 'Click on an idea to highlight it, and drag to organize your thoughts!';
       tipBox.style.visibility = '';
-      tipBox.innerHTML = 'Discuss your ideas! If you want to categorize or take notes on an idea, click it.';
     } else {
-      setText(currentIdea, state['currentIdea']);
-      var notePanel = document.getElementById('notePanel');
-      notePanel.style.visibility = '';
-      tipBox.style.visibility = 'hidden';
+      tipBox.innerHTML = state['currentIdea'];
     }
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#E1FFCA";
-
-    var sideBarDiv = document.getElementById('categoryAndNotes');
-    sideBarDiv.style.visibility = '';
-
-    if (state['category1']) {
-      console.log(state['category1']);
-      var categoryKey = document.getElementById('category1Key');
-      categoryKey.innerHTML = state['category1'] + 
-        ' <input type=button value="Assign" id="category1ChooseButton" onClick="categoryChooseButton1Click()"/>';
-    }
-    if (state['category2']) {
-      console.log(state['category2']);
-      var categoryKey = document.getElementById('category2Key');
-      categoryKey.innerHTML = state['category2'] + 
-        ' <input type=button value="Assign" id="category2ChooseButton" onClick="categoryChooseButton2Click()"/>';
-    }
-    if (state['category3']) {
-      console.log(state['category3']);
-      var categoryKey = document.getElementById('category3Key');
-      categoryKey.innerHTML = state['category3'] + 
-        ' <input type=button value="Assign" id="category3ChooseButton" onClick="categoryChooseButton3Click()"/>';
-    }
-    if (state['category4']) {
-      console.log(state['category4']);
-      var categoryKey = document.getElementById('category4Key');
-      categoryKey.innerHTML = state['category4'] + 
-        ' <input type=button value="Assign" id="category4ChooseButton" onClick="categoryChooseButton4Click()"/>';
-    }
-    if (state['category5']) {
-      console.log(state['category5']);
-      var categoryKey = document.getElementById('category5Key');
-      categoryKey.innerHTML = state['category5'] + 
-        ' <input type=button value="Assign" id="category5ChooseButton" onClick="categoryChooseButton5Click()"/>';
-    }
-    if (state['category6']) {
-      console.log(state['category6']);
-      var categoryKey = document.getElementById('category6Key');
-      categoryKey.innerHTML = state['category6'] + 
-        ' <input type=button value="Assign" id="category6ChooseButton" onClick="categoryChooseButton6Click()"/>';
-    }
-
-    if (state['notes'] && state['currentIdea']) {
-      var notes = JSON.parse(state['notes']);
-      console.log(notes);
-      var noteDisplay = document.getElementById('noteDisplay');
-      if (notes[state['currentIdea']]) {
-        var newText = '<ul>';
-        for (elem in notes[state['currentIdea']]) {
-          newText += '<li>' + notes[state['currentIdea']][elem] + '</li>';
-        }
-        newText += '</ul>';
-        noteDisplay.innerHTML = newText;
-      } else {
-        noteDisplay.innerHTML = '';
-      }
-      noteDisplay.scrollTop = noteDisplay.scrollHeight;
-    }
-
     // change button
     // update everything else in UI (title, voting)
   } else if (statePhase === 2) {
@@ -491,31 +405,17 @@ function updateStateUi(state) {
     button.value = 'Done';
     var title = document.getElementById('title');
     setText(title, 'Phase 3: Vote');
-    var countButton = document.getElementById('countButton');
-    var inputField = document.getElementById('inputField');
-    var currentIdea = document.getElementById('currentIdea');
-    setText(currentIdea, 'Remaining Votes: ' + (voteCap - userTotalVotes));
-    currentIdea.style.border = "1px solid black";
-    if (countButton && inputField) {
-      countButton.parentNode.removeChild(countButton);
-      inputField.parentNode.removeChild(inputField);
-    }
-    var sortButton = document.getElementById('sortButton');
-    if (sortButton) {
-      sortButton.parentNode.removeChild(sortButton);
-    }
+    $( "#addIdeaButton" ).remove();
+    $( "#inputField" ).remove();
+
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#FFCAE1";
 
-    var sideBarDiv = document.getElementById('categoryAndNotes');
-    sideBarDiv.style.visibility = 'hidden';
-
     var tipBox = document.getElementById('tipBox');
-    if (!state['votes']) {
+    if ( userTotalVotes === 0 ) {
       tipBox.innerHTML = 'Click on an idea to vote for it! You get five votes, and only you will be able to see them.';
-      tipBox.style.visibility = '';
     } else {
-      tipBox.style.visibility = 'hidden';
+      tipBox.innerHTML = 'Remaining Votes: ' + (voteCap - userTotalVotes);
     }
 
     // you're done... final report
@@ -526,11 +426,9 @@ function updateStateUi(state) {
     button.parentNode.removeChild(button);
     var title = document.getElementById('title');
     setText(title, 'Done! Your top voted ideas:');
-    console.log(countElement.innerHTML);
-    setText(countElement, '');
-    var currentIdea = document.getElementById('currentIdea');
-    setText(currentIdea, '');
-    currentIdea.style.border = "0px solid black";
+
+    var tipBox = document.getElementById('tipBox');
+    tipBox.style.visibility = 'hidden';
 
     var votes = state['votes'];
     if (votes) {
@@ -545,16 +443,13 @@ function updateStateUi(state) {
       console.log(sortable_ideas);
 
       var internalValue = '';
-
       for (i = 0; i < sortable_ideas.length; i++) {
         internalValue = internalValue + '<li class="finalIdea">' + sortable_ideas[i][0] + ' (votes: ' + sortable_ideas[i][1] + ')</li>';
       }
-
-      setText(countElement, internalValue);
-      console.log(countElement.innerHTML);
+      $("#ideasList1").empty();
+      $("#ideasList1").html( internalValue );
+      console.log(internalValue);
     }
-
-    //hightlight ideas with most votes / give report
   }
 }
 

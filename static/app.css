@@ -1,26 +1,58 @@
 .bigIdea1 {
 	color: purple;
+	font-size: 110%;
 }
 
 .bigIdea2 {
 	color: blue;
+	font-size: 120%;
 }
 
 .bigIdea3 {
 	color: green;
-
+	font-size: 130%;
 }
 
 .bigIdea4 {
 	color: yellow;
+	font-size: 140%;
 }
 
 .bigIdea5 {
 	color: orange;
+	font-size: 150%;
 }
 
 .bigIdea6 {
 	color:red;
+	font-size: 160%;
+}
+
+/*
+ * These sections ensure lists wrap text/columns properly
+ */
+
+#ideasPane { 
+	width: 900px; 
+	height: 320px;
+	overflow-x: scroll;
+	overflow-y: scroll;
+}
+
+.ideasPaneList {
+	width: 750px; 
+}
+
+.idea { 
+	width: 250px;
+	height:30px;
+	/*border: solid 1px red;*/
+	display: inline-block;
+	float: left 
+}
+
+.ui-draggable-disabled {
+	opacity: 0.4;
 }
 
 #topBar {
