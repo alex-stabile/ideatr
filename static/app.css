@@ -43,10 +43,14 @@
 	width: 750px; 
 }
 
-.idea { 
+.wide {
+
+}
+
+.idea {
+	/* border: solid 1px red; */
+	height: 30px;
 	width: 250px;
-	height:30px;
-	/*border: solid 1px red;*/
 	display: inline-block;
 	float: left 
 }

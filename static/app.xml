@@ -45,6 +45,7 @@
       Participants: <span id="participants"></span>
       <input type=button value="Next (Discuss)" id="phaseButton"
           onClick="phaseButtonClick()"/>
+      <input type=button value="Start Over" id="startOverButton" onClick="startOverButtonClick()"/>
     </ul>
   </div>
 </div>

@@ -25,52 +25,27 @@ function phaseButtonClick() {
   var phase = parseInt(gapi.hangout.data.getState()['phase']);
   var value = 0;
   if (!phase) {
-    // update everything else in UI (title, making ideas clickable)
-    value = 1;
+    value = 1;  //Discussion
   } else if (phase === 1) {
-    // change button
-    // update everything else in UI (title, voting)
-    value = 2;
+    value = 2;  //Voting
   } else {
-    // you're done... final report
-    value = 3;
+    value = 3;  //Final Report
   }
 
   gapi.hangout.data.submitDelta({'phase': '' + value});
 }
 
-//Sort the list of ideas based on their Class
-function sortButtonClick() {
-  console.log('sorting ideas');
-  var ideasList = gapi.hangout.data.getState()['count'];
-  var ideasArr = arrayFromListItemString(ideasList);
-  //create a dictionary where a Key is a class and its corresponding Value is an array of the list items with that class
-  var classItemsDict = {}
-  for (var i = 0; i < ideasArr.length; i++) {
-    //example list item:   <li class="bigIdea3" onclick="expandIdeaClick()">a</li> 
-    item = ideasArr[i];
-    var startIndex = item.indexOf("class") + 7;
-    var endIndex = item.indexOf("onclick") - 2
-    var className = item.substr(startIndex, endIndex - startIndex);
-    if (className.indexOf(' ') > -1) {  //this item has multiple classes
-      className = className.substr(0, className.indexOf(' '));  //the color/category class should be the first one
-    }
-    if (!classItemsDict[className]) {
-      classItemsDict[className] = [item];
-    } else {
-      classItemsDict[className].push(item);
-    }
+function startOverButtonClick() {
+  /* 
+   * Remove all keys from the state
+   * Documentation @ https://developers.google.com/+/hangouts/api/gapi.hangout.data
+   */
+  var keys = gapi.hangout.data.getKeys();
+  console.log('removing all keys: ', keys);
+  for ( var i = 0; i < keys.length; i++  ) {
+    var key = keys[i];
+    gapi.hangout.data.clearValue( key );
   }
-  //turn classItemsDict into a proper string of HTML
-  sortedListStr = '';
-  for (var key in classItemsDict) {
-    var value = classItemsDict[key];
-    for (var i = 0; i < value.length; i++) {
-      sortedListStr += value[i];
-    }
-  }
-  console.log('sorted ideas: ', sortedListStr);
-  gapi.hangout.data.submitDelta({'count': sortedListStr});
 }
 
 //take a string of HTML list item elements, and return an array of each list item HTML
@@ -121,7 +96,7 @@ function addIdeaButtonClick() {
     console.log(ideaText);
     var item = document.createElement('li');
     item.innerHTML = ideaText;
-    item.className = 'idea';
+    item.className = 'idea wide';
     item.id = 'i' + i;  //its position in the list...guaranteed to be unique! :)
     curList.append(item);
     $( '#' + item.id ).click( expandIdeaClick );
@@ -372,6 +347,12 @@ function updateStateUi(state) {
     button.value = 'Next (Discuss)';
     var title = document.getElementById('title');
     setText(title, 'Phase 1: Brainstorm');
+    var topBar = document.getElementById('topBar');
+    topBar.style.backgroundColor = "#CAE1FF";
+    $( "#addIdeaButton" ).show();
+    $( "#inputField" ).show();
+    $( "#phaseButton" ).show();
+    $( "#tipBox" ).show();
 
     var tipBox = document.getElementById('tipBox');
     if (!state['ideas']) {
@@ -405,8 +386,8 @@ function updateStateUi(state) {
     button.value = 'Done';
     var title = document.getElementById('title');
     setText(title, 'Phase 3: Vote');
-    $( "#addIdeaButton" ).remove();
-    $( "#inputField" ).remove();
+    $( "#addIdeaButton" ).hide();
+    $( "#inputField" ).hide();
 
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#FFCAE1";
@@ -422,13 +403,11 @@ function updateStateUi(state) {
   } else if (statePhase === 3){
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#E1CAFF";
-    var button = document.getElementById('phaseButton');
-    button.parentNode.removeChild(button);
     var title = document.getElementById('title');
     setText(title, 'Done! Your top voted ideas:');
 
-    var tipBox = document.getElementById('tipBox');
-    tipBox.style.visibility = 'hidden';
+    $("#tipBox").hide();
+    $("#phaseButton").hide();
 
     var votes = state['votes'];
     if (votes) {
