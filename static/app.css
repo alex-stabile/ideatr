@@ -40,19 +40,17 @@
 }
 
 .ideasPaneList {
-	width: 750px; 
-}
-
-.wide {
-
+	width: 250px;
+	height: 0px;
+	display: inline-block;
 }
 
 .idea {
 	/* border: solid 1px red; */
 	height: 30px;
-	width: 250px;
+	/*width: 250px;*/
 	display: inline-block;
-	float: left 
+	float: left;
 }
 
 .ui-draggable-disabled {

@@ -54,8 +54,8 @@
   <div style="float: left; padding: 0px 20px; border-right: 1px solid #EEE; overflow:auto; width: 75%;">
     <dl>
       <div id="ideasPane">
+        <dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>
         <ul id="ideasList1" class="ideasPaneList">
-          <dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>
         </ul>
       </div>
       <dd id="participants"></dd>

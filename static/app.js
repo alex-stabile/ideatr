@@ -17,11 +17,14 @@ var serverPath = '//ideatr2472.appspot.com/';
 var userTotalVotes = 0;
 var voteCap = 5; 
 
-var numIdeasPerColumn = 11;
+var numIdeasPerColumn = 1;
 var draggingIdeaId = null;
 var lastUiUpdateTime = 0;
 
 function phaseButtonClick() {
+  if (confirm("You are attempting to move to the next phase of the brainstorming process -- make sure the rest of your group is ready first! Press OK to move to the next phase.") == false) {
+    return;
+  }
   var phase = parseInt(gapi.hangout.data.getState()['phase']);
   var value = 0;
   if (!phase) {
@@ -82,7 +85,7 @@ function addIdeaButtonClick() {
   console.log('New ideasList is ' + ideasList);
 
   if (ideasList.length === 1) {
-    $("#ideasList1").empty(); //make sure there's nothing hanging around
+    $("#initialMessage").remove(); //make sure there's nothing hanging around
   }
   var lists = $("#ideasPane").children();
   curList = $("#ideasList" + lists.length); //get the proper list to put the new idea in
@@ -96,7 +99,7 @@ function addIdeaButtonClick() {
     console.log(ideaText);
     var item = document.createElement('li');
     item.innerHTML = ideaText;
-    item.className = 'idea wide';
+    item.className = 'idea';
     item.id = 'i' + i;  //its position in the list...guaranteed to be unique! :)
     curList.append(item);
     $( '#' + item.id ).click( expandIdeaClick );
@@ -109,6 +112,14 @@ function addIdeaButtonClick() {
         stop: dragStop
       });
     }
+  }
+  //!!!!!
+  if ( curList.children().length === numIdeasPerColumn ) {
+    console.log('****Making a new list!!!');
+    var newList = document.createElement('ul');
+    newList.id = 'ideasList' + (lists.length + 1);
+    newList.className = 'ideasPaneList';
+    $('#ideasPane').append( newList );
   }
   //is this the right place for this?
   var ideasPane = document.getElementById('ideasPane');
@@ -284,7 +295,7 @@ function updateHtml() {
 
 function updateStateUi(state) {
   lastUiUpdateTime = (new Date()).getTime();
-  console.log('*** updateStateUi called');
+  console.log('Called updateStateUi');
   var statePhase = parseInt(state['phase']);
 
   if ( !statePhase || statePhase < 2 ) {
@@ -292,12 +303,22 @@ function updateStateUi(state) {
     var newHtmlStr = state['ideasPaneHtml'];
     if ( newHtmlStr ) {
       var parsedHtml = $.parseHTML(newHtmlStr);
+      console.log( 'Received new Html: ', parsedHtml );
+      /*
       parsedHtml = parsedHtml[1];
       if (parsedHtml.id != 'ideasList1') {
         console.log('ERROR: bad HTML received in updateStateUi');
       }
       console.log( 'Received new Html: ', parsedHtml );
-      var nodes = parsedHtml.childNodes;
+      */
+
+      for (var h = 0; h < parsedHtml.length; h++) {
+      var nodes = parsedHtml[h];
+      if ( nodes.nodeName === "#text" ) {   //why does this even happen?
+        continue;
+      }
+      console.log('processing nodes: ', nodes);
+      //var nodes = parsedHtml.childNodes;
       for (var i = 0; i < nodes.length; i++ ) {
         var item = nodes[i];
         var id = item.attributes['id'].value;
@@ -326,6 +347,9 @@ function updateStateUi(state) {
           $( selector ).click( expandIdeaClick );
         }
       }
+
+      }
+
       if ( statePhase ) {
         console.log('**making everything draggable');
         $( '.idea' ).draggable({
@@ -334,8 +358,12 @@ function updateStateUi(state) {
         });
       }
     } else { 
-      $("#ideasList1").empty();
-      $("#ideasList1").html('<dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>');
+      $("#ideasPane").empty();
+      $("#ideasPane").html('<dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>');
+      var firstList = document.createElement('ul');
+      firstList.id = 'ideasList1';
+      firstList.className = 'ideasPaneList';
+      $("#ideasPane").append(firstList);
     }
   }
 
@@ -425,8 +453,12 @@ function updateStateUi(state) {
       for (i = 0; i < sortable_ideas.length; i++) {
         internalValue = internalValue + '<li class="finalIdea">' + sortable_ideas[i][0] + ' (votes: ' + sortable_ideas[i][1] + ')</li>';
       }
-      $("#ideasList1").empty();
-      $("#ideasList1").html( internalValue );
+      $("#ideasPane").empty();
+      var firstList = document.createElement('ul');
+      firstList.id = 'finalIdeasList';
+      firstList.className = 'ideasPaneList';
+      $("#ideasPane").append(firstList);
+      $("#finalIdeasList").html( internalValue );
       console.log(internalValue);
     }
   }
