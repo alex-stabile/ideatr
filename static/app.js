@@ -15,11 +15,12 @@
 */
 var serverPath = '//ideatr2472.appspot.com/';
 var userTotalVotes = 0;
+var userVoteDistribution = {};
 var voteCap = 5; 
+var userHasVoted = false;
 
 var numIdeasPerColumn = 1;
 var draggingIdeaId = null;
-var lastUiUpdateTime = 0;
 
 function phaseButtonClick() {
   if (confirm("You are attempting to move to the next phase of the brainstorming process -- make sure the rest of your group is ready first! Press OK to move to the next phase.") == false) {
@@ -39,6 +40,10 @@ function phaseButtonClick() {
 }
 
 function startOverButtonClick() {
+  userTotalVotes = 0;
+  userVoteDistribution = {};
+  userHasVoted = false;
+  draggingIdeaId = null;
   /* 
    * Remove all keys from the state
    * Documentation @ https://developers.google.com/+/hangouts/api/gapi.hangout.data
@@ -226,25 +231,33 @@ function expandIdeaClick( event ) {
     
     gapi.hangout.data.submitDelta({ 'currentIdea': idea.innerHTML, 'ideasPaneHtml': $("#ideasPane").html() });
 
-  } else if (phase === 2 && userTotalVotes < voteCap) {
-    userTotalVotes++;
-    var votes = gapi.hangout.data.getState()['votes'];
-    if (!votes) votes = {};
-    else votes = JSON.parse(votes);
-    console.log(votes);
-    var strippedIdea = idea.innerHTML;
-    if (strippedIdea.indexOf("*") >= 0) strippedIdea = strippedIdea.substr(0,strippedIdea.indexOf("*"));
-    console.log(strippedIdea);
-    if (votes[strippedIdea]) {
-      votes[strippedIdea] = votes[strippedIdea] + 1;
-    } else {
-      votes[strippedIdea] = 1;
+  } else if (phase === 2) {
+    if ( userTotalVotes < voteCap ) {
+      var strippedIdea = idea.innerHTML;
+      if (strippedIdea.indexOf("*") >= 0) strippedIdea = strippedIdea.substr(0,strippedIdea.indexOf("*"));
+      console.log('strippedIdea: ', strippedIdea);
+      if (userVoteDistribution[strippedIdea]) {
+        userVoteDistribution[strippedIdea] = userVoteDistribution[strippedIdea] + 1;
+      } else {
+        userVoteDistribution[strippedIdea] = 1;
+      }
+      idea.innerHTML = idea.innerHTML + "*";
+      userTotalVotes++;
+      tipBox.innerHTML = 'Remaining Votes: ' + (voteCap - userTotalVotes);
     }
-    idea.innerHTML = idea.innerHTML + "*";
-
-    console.log(JSON.stringify(votes));
-
-    gapi.hangout.data.submitDelta({'votes': JSON.stringify(votes)});
+    if ( userTotalVotes === voteCap && !userHasVoted ) {
+      var votes = gapi.hangout.data.getState()['votes'];
+      if (!votes) votes = {};
+      else votes = JSON.parse(votes);
+      console.log('votes: ', votes);
+      for ( key in userVoteDistribution ) {
+        if ( !votes[key] ) votes[key] = userVoteDistribution[key];
+        else votes[key] += userVoteDistribution[key];
+      }
+      userHasVoted = true; //so it won't submit again
+      console.log('Submitting votes str: ', JSON.stringify(votes));
+      gapi.hangout.data.submitDelta({'votes': JSON.stringify(votes)});
+    }
   }
 }
 
