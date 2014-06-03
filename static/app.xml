@@ -41,7 +41,6 @@
           onClick="addIdeaButtonClick()"/>
     </div>
     <div id="userInputAlert" class="userAlert">
-      This is a sample user input alert!
     </div>
     <div>
       Participants: <span id="participants"></span>

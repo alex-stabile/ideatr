@@ -21,9 +21,16 @@ var userHasVoted = false;
 
 var draggingIdeaId = null;
 var forbiddenCharacters = '<>';
+var numMoveOnVotes = 0;
+var userHasVotedToContinue = false;
 
 function phaseButtonClick() {
-  if (!confirm("You are attempting to move to the next phase of the brainstorming process -- make sure the rest of your group is ready first! Press OK to move to the next phase.")) {
+  numMoveOnVotes++;
+  userHasVotedToContinue = true;
+  updatePhaseAlerts();
+  gapi.hangout.data.sendMessage("let's move on!");
+  if ( gapi.hangout.getParticipants().length > numMoveOnVotes ) {
+    $("#phaseButton").attr("disabled", true);
     return;
   }
   var phase = parseInt(gapi.hangout.data.getState()['phase']);
@@ -35,7 +42,11 @@ function phaseButtonClick() {
   } else {
     value = 3;  //Final Report
   }
-
+  numMoveOnVotes = 0;
+  userHasVotedToContinue = false;
+  updatePhaseAlerts();
+  $("#phaseButton").removeAttr("disabled");
+  gapi.hangout.data.sendMessage("about to move on");
   gapi.hangout.data.submitDelta({'phase': '' + value});
 }
 
@@ -184,29 +195,6 @@ function promptButtonClick() {
 
   gapi.hangout.data.submitDelta({'prompt': newText});
 }
-/*
-function addNoteButtonClick() {
-  console.log('Add note button clicked.');
-  var inputNote = document.getElementById('noteInputField');
-  var value = inputNote.value;
-  inputNote.value = '';
-  console.log('New note is ' + value);
-  // Send update to shared state.
-  // NOTE:  Only ever send strings as values in the key-value pairs
-
-  var notes = gapi.hangout.data.getState()['notes'];
-    if (!notes) notes = {};
-    else notes = JSON.parse(notes);
-  var currIdea = gapi.hangout.data.getState()['currentIdea'];
-    if (notes[currIdea]) {
-      notes[currIdea].push(value);
-    } else {
-      var noteArray = [value];
-      notes[currIdea] = noteArray;
-    }
-  gapi.hangout.data.submitDelta({'notes': JSON.stringify(notes)});
-}
-*/
 
 function setText(element, text) {
   element.innerHTML = typeof text === 'string' ?
@@ -275,45 +263,28 @@ function expandIdeaClick( event ) {
   }
 }
 
-function getMessageClick() {
-  console.log('Requesting message from main.py');
-  var http = new XMLHttpRequest();
-  http.open('GET', serverPath);
-  http.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      var jsonResponse = JSON.parse(http.responseText);
-      console.log(jsonResponse);
-
-      var messageElement = document.getElementById('message');
-      setText(messageElement, jsonResponse['message']);
-    }
-  }
-  http.send();
-}
-
-
-$( document ).ready(function() {
-    console.log("Document ready (JQuery working)");
-});
-
 function dragStart( event, ui ) {
   console.log('dragging started: ', event.target.id);
   draggingIdeaId = event.target.id;
   selector = "#" + event.target.id;
   $( selector ).draggable( "option", "disabled", true );
   $( selector ).unbind( "click", expandIdeaClick ); //temporarily, so dragging doesn't trigger the click
-  gapi.hangout.data.submitDelta({ 'ideasPaneHtml': $("#ideasPane").html() })
+  var phase = parseInt(gapi.hangout.data.getState()['phase']);
+  if ( !phase || phase < 2 ) {
+    gapi.hangout.data.sendMessage("DRAGSTART" + event.target.id);
+  }
 }
 
-//useful example?
-//console.log('\t', $('#'+event.target.id)[0].outerHTML);
 function dragStop( event, ui ) {
   console.log('dragging stopped: ', event.target.id);
   draggingIdeaId = null;
   var selector = "#" + event.target.id;
   $( selector ).draggable( "option", "disabled", false );
-  gapi.hangout.data.submitDelta({ 'ideasPaneHtml': $("#ideasPane").html() })
   $( selector ).click( expandIdeaClick );  //unbound when we started the drag
+  var phase = parseInt(gapi.hangout.data.getState()['phase']);
+  if ( !phase || phase < 2 ) {
+    gapi.hangout.data.sendMessage("DRAGSTOP" + JSON.stringify({ id: event.target.id, top: event.target.style.top, left: event.target.style.left }) );
+  }
 }
 
 function updateIdeasPane( newHtmlStr, phase ) {
@@ -325,7 +296,9 @@ function updateIdeasPane( newHtmlStr, phase ) {
     if ( ideaUl.className != "ideasPaneList" ) {
       console.log('ERROR: something in the ideasPane is not of the right class: ', ideaUl);
       console.log('\tskipping this element');
-      alert("Error in updateStateUi: see console log");
+      if ( !ideaUl.nodeName === "#text" ) { //this exception is a known issue with using enter to submit on Windows
+        alert("Error in updateStateUi: see console log");
+      }
       continue;
     }
     if ( ideaUl.children.length > 1 ) {
@@ -346,11 +319,13 @@ function updateIdeasPane( newHtmlStr, phase ) {
       if ( ideaOnPage.attributes['style'] ) {
         ideaOnPage.style.cssText = ideaLi.attributes['style'].value;
       }
+      /*
       if ($( selector ).hasClass('ui-draggable-disabled')) {
         $( selector ).draggable( "option", "disabled", true );
       } else if ( $( selector ).hasClass('ui-draggable') ) {
         $( selector ).draggable( "option", "disabled", false );
       }
+      */
     } else {  //this idea is not already in the HTML on screen
       $( "#ideasPane" ).append(ideaUl);
       $( selector ).click( expandIdeaClick );
@@ -363,6 +338,42 @@ function updateIdeasPane( newHtmlStr, phase ) {
       stop: dragStop,
       containment: $('#ideasPane')
     });
+  }
+}
+
+function processMessage( senderID, messageStr ) {
+  console.log('Received message from ' + senderID + '! Message: ' + messageStr);
+  if ( messageStr.indexOf('DRAGSTART') > -1 ) {
+    var id = messageStr.substr(9);
+    $( '#' + id ).draggable( "option", "disabled", true );
+    return;
+  }
+  if ( messageStr.indexOf('DRAGSTOP') > -1 ) {
+    var obj = JSON.parse( messageStr.substr(8) );
+    var idea = document.getElementById( obj.id );
+    idea.style.top = obj.top;
+    idea.style.left = obj.left;
+    $( '#' + obj.id ).draggable( "option", "disabled", false );
+    return;
+  }
+
+  if ( messageStr === "about to move on" ) {
+    numMoveOnVotes = 0;
+    userHasVotedToContinue = false;
+    $("#phaseButton").removeAttr("disabled");
+  } else {
+    numMoveOnVotes++;
+  }
+  updatePhaseAlerts();
+}
+
+function updatePhaseAlerts() {
+  if ( numMoveOnVotes === 0 ) {
+    $("#userPhaseAlert").empty();
+  } else if ( numMoveOnVotes === 1 ) {
+    $("#userPhaseAlert").html( '1 user is ready to move on!' );
+  } else {
+    $("#userPhaseAlert").html( numMoveOnVotes + ' users are ready to move on!' );
   }
 }
 
@@ -386,6 +397,10 @@ function updateStateUi(state) {
       userVoteDistribution = {};
       userHasVoted = false;
       draggingIdeaId = null;
+      numMoveOnVotes = 0;
+      userHasVotedToContinue = false;
+      updatePhaseAlerts();
+      $("#phaseButton").removeAttr("disabled");
     }
   }
 
@@ -470,7 +485,7 @@ function updateStateUi(state) {
       $("#ideasPane").append(finalList);
     } else {
       console.log("ERROR: entered phase 3 and no votes were found in the state");
-      alert("Error: check console output");
+      //alert("Error: check console output");
     }
     $("#tipBox").hide();
     $("#phaseButton").hide();
@@ -493,6 +508,9 @@ function init() {
 
       gapi.hangout.data.onStateChanged.add(function(eventObj) {
         updateStateUi(eventObj.state);
+      });
+      gapi.hangout.data.onMessageReceived.add(function(messageObj) {
+        processMessage( messageObj.senderId, messageObj.message );
       });
       gapi.hangout.onParticipantsChanged.add(function(eventObj) {
         updateParticipantsUi(eventObj.participants);
