@@ -28,7 +28,7 @@ function phaseButtonClick() {
   numMoveOnVotes++;
   userHasVotedToContinue = true;
   updatePhaseAlerts();
-  gapi.hangout.data.sendMessage("let's move on!");
+  gapi.hangout.data.sendMessage("move on vote");
   if ( gapi.hangout.getParticipants().length > numMoveOnVotes ) {
     $("#phaseButton").attr("disabled", true);
     return;
@@ -66,19 +66,6 @@ function startOverButtonClick() {
   }
 }
 
-//take a string of HTML list item elements, and return an array of each list item HTML
-function arrayFromListItemString(str) {
-  var arr = [];
-  while (str != '') {
-    var listItemEndIndex = str.indexOf('</li>') + 5;  //first occurence of specified string + length of that string
-    curIdeaItem = str.substr(0, listItemEndIndex);
-    console.log(curIdeaItem);
-    str = str.substr(listItemEndIndex);  //cut off the list item we just extracted
-    arr.push(curIdeaItem);
-  }
-  return arr;
-}
-
 function getArrayFromState( keyStr ) {
   var arrStr = gapi.hangout.data.getState()[ keyStr ];
   if (arrStr) {
@@ -86,7 +73,6 @@ function getArrayFromState( keyStr ) {
   }
   return [];
 }
-
 function addIdeaButtonClick() {
   // Note that if you click the button several times in succession,
   // if the state update hasn't gone through, it will submit the same
@@ -356,12 +342,11 @@ function processMessage( senderID, messageStr ) {
     $( '#' + obj.id ).draggable( "option", "disabled", false );
     return;
   }
-
   if ( messageStr === "about to move on" ) {
     numMoveOnVotes = 0;
     userHasVotedToContinue = false;
     $("#phaseButton").removeAttr("disabled");
-  } else {
+  } else if ( messageStr === "move on vote") {
     numMoveOnVotes++;
   }
   updatePhaseAlerts();
