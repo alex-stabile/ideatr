@@ -16,14 +16,13 @@
 var serverPath = '//ideatr2472.appspot.com/';
 var userTotalVotes = 0;
 var userVoteDistribution = {};
-var voteCap = 5; 
+var voteCap = 5;
 var userHasVoted = false;
 
-var numIdeasPerColumn = 1;
 var draggingIdeaId = null;
 
 function phaseButtonClick() {
-  if (confirm("You are attempting to move to the next phase of the brainstorming process -- make sure the rest of your group is ready first! Press OK to move to the next phase.") == false) {
+  if (!confirm("You are attempting to move to the next phase of the brainstorming process -- make sure the rest of your group is ready first! Press OK to move to the next phase.")) {
     return;
   }
   var phase = parseInt(gapi.hangout.data.getState()['phase']);
@@ -40,10 +39,9 @@ function phaseButtonClick() {
 }
 
 function startOverButtonClick() {
-  userTotalVotes = 0;
-  userVoteDistribution = {};
-  userHasVoted = false;
-  draggingIdeaId = null;
+  if (!confirm("Are you sure you want to start over? You will be returned to Phase 1 and all ideas will be erased.")) {
+    return;
+  }
   /* 
    * Remove all keys from the state
    * Documentation @ https://developers.google.com/+/hangouts/api/gapi.hangout.data
@@ -69,67 +67,70 @@ function arrayFromListItemString(str) {
   return arr;
 }
 
+function getArrayFromState( keyStr ) {
+  var arrStr = gapi.hangout.data.getState()[ keyStr ];
+  if (arrStr) {
+    return JSON.parse(arrStr);
+  }
+  return [];
+}
+
 function addIdeaButtonClick() {
   // Note that if you click the button several times in succession,
   // if the state update hasn't gone through, it will submit the same
   // delta again.  The hangout data state only remembers the most-recent
   // update.
   console.log('Add idea button clicked.');
-  var value = '';
 
   var newText = document.getElementById('inputField').value;
+  /* sanitize? */
   document.getElementById('inputField').value = '';
 
-  var ideasList = gapi.hangout.data.getState()['ideas'];
-  if (ideasList) {
-    ideasList = JSON.parse(ideasList);
-    ideasList.push(newText);
-  } else {
-    ideasList = [newText];
-  }
-  console.log('New ideasList is ' + ideasList);
+  var ideasList = getArrayFromState( 'ideas' );
+  ideasList.push( newText );
+  console.log('New ideas list is: ' + ideasList);
 
-  if (ideasList.length === 1) {
-    $("#initialMessage").remove(); //make sure there's nothing hanging around
+  /* Get rid of the initial message if it exists */
+  if ( $("#initialMessage").length ) {
+    $("#initialMessage").remove();
   }
-  var lists = $("#ideasPane").children();
-  curList = $("#ideasList" + lists.length); //get the proper list to put the new idea in
-  var children = curList.children();
-  var startIndex = 0; //in ideasList
-  if ( children ) {
-    startIndex = children.length + (lists.length - 1) * numIdeasPerColumn;
-  }
+
+  var ideasInHtml = $("#ideasPane").children();
+  var startIndex = 0;
+  if ( ideasInHtml )  startIndex = ideasInHtml.length;
+
   for (var i = startIndex; i < ideasList.length; i++)  {
     var ideaText = ideasList[i];
-    console.log(ideaText);
-    var item = document.createElement('li');
-    item.innerHTML = ideaText;
-    item.className = 'idea';
-    item.id = 'i' + i;  //its position in the list...guaranteed to be unique! :)
-    curList.append(item);
-    $( '#' + item.id ).click( expandIdeaClick );
+    console.log('Checking idea from state: ', ideaText);
+
+    var ideaUl = document.createElement('ul');
+    ideaUl.className = 'ideasPaneList';
+    var ideaLi = document.createElement('li');
+    ideaLi.innerHTML = ideaText;
+    ideaLi.className = 'idea';
+    ideaLi.id = 'i' + i;  //its position in the list...guaranteed to be unique! :)
+    ideaUl.appendChild( ideaLi );
+    $('#ideasPane').append( ideaUl );
+
+    ideaSelector = '#' + ideaLi.id;
+    $( ideaSelector ).click( expandIdeaClick );
     var phase = gapi.hangout.data.getState()['phase'];
-    if ( phase ) phase = parseInt(phase);
+    if ( phase )  phase = parseInt(phase);
     if ( phase === 1 ) {
-      console.log('\tyes');
-      $( '#' + item.id ).draggable({
+      console.log('\tMaking the new idea draggable');
+      $( ideaSelector ).draggable({
         start: dragStart,
         stop: dragStop
       });
     }
   }
-  //!!!!!
-  if ( curList.children().length === numIdeasPerColumn ) {
-    console.log('****Making a new list!!!');
-    var newList = document.createElement('ul');
-    newList.id = 'ideasList' + (lists.length + 1);
-    newList.className = 'ideasPaneList';
-    $('#ideasPane').append( newList );
-  }
-  //is this the right place for this?
+
+  /* is this the right place for this? */
   var ideasPane = document.getElementById('ideasPane');
   ideasPane.scrollTop = ideasPane.scrollHeight;
-  
+
+  console.log('Submitting delta from addIdeaButtonClick');
+  /* Disable the button until the updateStateUi is done? */
   gapi.hangout.data.submitDelta({ 'ideas': JSON.stringify(ideasList), 'ideasPaneHtml': $("#ideasPane").html() });
 }
 
@@ -288,7 +289,7 @@ function dragStart( event, ui ) {
   selector = "#" + event.target.id;
   $( selector ).draggable( "option", "disabled", true );
   $( selector ).unbind( "click", expandIdeaClick ); //temporarily, so dragging doesn't trigger the click
-  updateHtml();
+  gapi.hangout.data.submitDelta({ 'ideasPaneHtml': $("#ideasPane").html() })
 }
 
 //useful example?
@@ -298,91 +299,83 @@ function dragStop( event, ui ) {
   draggingIdeaId = null;
   var selector = "#" + event.target.id;
   $( selector ).draggable( "option", "disabled", false );
-  updateHtml();
+  gapi.hangout.data.submitDelta({ 'ideasPaneHtml': $("#ideasPane").html() })
   $( selector ).click( expandIdeaClick );  //unbound when we started the drag
 }
 
-function updateHtml() {
-  gapi.hangout.data.submitDelta({ 'ideasPaneHtml': $("#ideasPane").html() })
+function updateIdeasPane( newHtmlStr, phase ) {
+  var parsedHtml = $.parseHTML(newHtmlStr);
+  console.log( 'Received new Html: ', parsedHtml );
+  for (var h = 0; h < parsedHtml.length; h++) {
+    var ideaUl = parsedHtml[h];
+    console.log('ideaUl: ', ideaUl)
+    if ( ideaUl.className != "ideasPaneList" ) {
+      console.log('ERROR: something in the ideasPane is not of the right class: ', ideaUl);
+      console.log('\tskipping this element');
+      alert("Error in updateStateUi: see console log");
+      continue;
+    }
+    if ( ideaUl.children.length > 1 ) {
+      console.log('ERROR: an element in the ideasPane has too many children: ', ideaUl);
+      console.log('\tskipping this element');
+      alert("Error in updateStateUi: see console log");
+      continue;
+    }
+    var ideaLi = ideaUl.children[0];
+    if ( draggingIdeaId === ideaLi.id) {  //don't mess with this! user is dragging it
+      continue;
+    }
+    var ideaOnPage = document.getElementById( ideaLi.id );
+    var selector = '#' + ideaLi.id;
+    if( ideaOnPage ) {
+      ideaOnPage.className = ideaLi.className;
+      ideaOnPage.innerHTML = ideaLi.innerHTML; //just in case
+      if ( ideaOnPage.attributes['style'] ) {
+        ideaOnPage.style.cssText = ideaLi.attributes['style'].value;
+      }
+      if ($( selector ).hasClass('ui-draggable-disabled')) {
+        $( selector ).draggable( "option", "disabled", true );
+      } else if ( $( selector ).hasClass('ui-draggable') ) {
+        $( selector ).draggable( "option", "disabled", false );
+      }
+    } else {  //this idea is not already in the HTML on screen
+      $( "#ideasPane" ).append(ideaUl);
+      $( selector ).click( expandIdeaClick );
+    }
+  }
+  if ( phase ) {
+    console.log('Making everything draggable');
+    $( '.idea' ).draggable({
+      start: dragStart,
+      stop: dragStop
+    });
+  }
 }
 
 function updateStateUi(state) {
-  lastUiUpdateTime = (new Date()).getTime();
   console.log('Called updateStateUi');
   var statePhase = parseInt(state['phase']);
 
+  /* Update ideasPane */
   if ( !statePhase || statePhase < 2 ) {
-    //Update ideas pane view:
     var newHtmlStr = state['ideasPaneHtml'];
     if ( newHtmlStr ) {
-      var parsedHtml = $.parseHTML(newHtmlStr);
-      console.log( 'Received new Html: ', parsedHtml );
-      /*
-      parsedHtml = parsedHtml[1];
-      if (parsedHtml.id != 'ideasList1') {
-        console.log('ERROR: bad HTML received in updateStateUi');
+      /* Get rid of the initial message if it exists */
+      if ( $("#initialMessage").length ) {
+        $("#initialMessage").remove();
       }
-      console.log( 'Received new Html: ', parsedHtml );
-      */
-
-      for (var h = 0; h < parsedHtml.length; h++) {
-      var nodes = parsedHtml[h];
-      if ( nodes.nodeName === "#text" ) {   //why does this even happen?
-        continue;
-      }
-      console.log('processing nodes: ', nodes);
-      //var nodes = parsedHtml.childNodes;
-      for (var i = 0; i < nodes.length; i++ ) {
-        var item = nodes[i];
-        var id = item.attributes['id'].value;
-        if ( draggingIdeaId === id ) {  //don't mess with this! (user is dragging it)
-          continue;
-        }
-        var oldItem = document.getElementById( id );
-        var selector = '#' + id;
-        if ( oldItem ) {  //something was modified
-          oldItem.className = item.attributes['class'].value;
-          if ( item.attributes['style'] ) {
-            oldItem.style.cssText = item.attributes['style'].value;
-          }
-          oldItem.innerHTML = item.innerHTML; //just in case
-          if ($( selector ).hasClass('ui-draggable-disabled')) {
-            $( selector ).draggable( "option", "disabled", true );
-          } else if ( $( selector ).hasClass('ui-draggable') ) {
-            $( selector ).draggable( "option", "disabled", false );
-          }
-        } else {    //something was added
-          var ideasList = JSON.parse(state['ideas']);
-          if (ideasList.length === 1) {
-            $("#ideasList1").empty(); //make sure there's nothing hanging around
-          }
-          $("#ideasList1").append(item);
-          $( selector ).click( expandIdeaClick );
-        }
-      }
-
-      }
-
-      if ( statePhase ) {
-        console.log('**making everything draggable');
-        $( '.idea' ).draggable({
-          start: dragStart,
-          stop: dragStop
-        });
-      }
-    } else { 
+      updateIdeasPane( newHtmlStr, statePhase );
+    } else {  //there was no HTML in the state
       $("#ideasPane").empty();
       $("#ideasPane").html('<dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>');
-      var firstList = document.createElement('ul');
-      firstList.id = 'ideasList1';
-      firstList.className = 'ideasPaneList';
-      $("#ideasPane").append(firstList);
+      userTotalVotes = 0;
+      userVoteDistribution = {};
+      userHasVoted = false;
+      draggingIdeaId = null;
     }
   }
 
-  //update other stuff:
-  
-  console.log('Phase:' + statePhase);
+  /* Update other stuff: */
   if (!statePhase) {
     var button = document.getElementById('phaseButton');
     button.value = 'Next (Discuss)';
@@ -390,11 +383,6 @@ function updateStateUi(state) {
     setText(title, 'Phase 1: Brainstorm');
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#CAE1FF";
-    $( "#addIdeaButton" ).show();
-    $( "#inputField" ).show();
-    $( "#phaseButton" ).show();
-    $( "#tipBox" ).show();
-
     var tipBox = document.getElementById('tipBox');
     if (!state['ideas']) {
       tipBox.innerHTML = 'Add as many ideas as you can, as quickly as you can! --->';
@@ -405,6 +393,10 @@ function updateStateUi(state) {
         tipBox.innerHTML = state['prompt'] + ' <input type=button value="Get a new prompt" id="promptButton" onClick="promptButtonClick()"/>';
       }
     }
+    $( "#addIdeaButton" ).show();
+    $( "#inputField" ).show();
+    $( "#phaseButton" ).show();
+    $( "#tipBox" ).show();
   } else if (statePhase === 1) {
     var button = document.getElementById('phaseButton');
     button.value = 'Next (Vote)';
@@ -420,36 +412,26 @@ function updateStateUi(state) {
     }
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#E1FFCA";
-    // change button
-    // update everything else in UI (title, voting)
   } else if (statePhase === 2) {
     var button = document.getElementById('phaseButton');
     button.value = 'Done';
     var title = document.getElementById('title');
     setText(title, 'Phase 3: Vote');
-    $( "#addIdeaButton" ).hide();
-    $( "#inputField" ).hide();
-
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#FFCAE1";
-
     var tipBox = document.getElementById('tipBox');
     if ( userTotalVotes === 0 ) {
-      tipBox.innerHTML = 'Click on an idea to vote for it! You get five votes, and only you will be able to see them.';
+      tipBox.innerHTML = 'Click on an idea to vote for it! You get 5 votes, and only you will be able to see them.';
     } else {
       tipBox.innerHTML = 'Remaining Votes: ' + (voteCap - userTotalVotes);
     }
-
-    // you're done... final report
+    $( "#addIdeaButton" ).hide();
+    $( "#inputField" ).hide();
   } else if (statePhase === 3){
     var topBar = document.getElementById('topBar');
     topBar.style.backgroundColor = "#E1CAFF";
     var title = document.getElementById('title');
     setText(title, 'Done! Your top voted ideas:');
-
-    $("#tipBox").hide();
-    $("#phaseButton").hide();
-
     var votes = state['votes'];
     if (votes) {
       votes = JSON.parse(votes);
@@ -461,19 +443,23 @@ function updateStateUi(state) {
         return b[1]-a[1];
       });
       console.log(sortable_ideas);
-
       var internalValue = '';
       for (i = 0; i < sortable_ideas.length; i++) {
         internalValue = internalValue + '<li class="finalIdea">' + sortable_ideas[i][0] + ' (votes: ' + sortable_ideas[i][1] + ')</li>';
       }
+      console.log('Final internal value: ', internalValue);
       $("#ideasPane").empty();
-      var firstList = document.createElement('ul');
-      firstList.id = 'finalIdeasList';
-      firstList.className = 'ideasPaneList';
-      $("#ideasPane").append(firstList);
-      $("#finalIdeasList").html( internalValue );
-      console.log(internalValue);
+      var finalList = document.createElement('ul');
+      finalList.id = 'finalIdeasList';
+      finalList.className = 'ideasPaneList';
+      finalList.innerHTML = internalValue;
+      $("#ideasPane").append(finalList);
+    } else {
+      console.log("ERROR: entered phase 3 and no votes were found in the state");
+      alert("Error: check console output");
     }
+    $("#tipBox").hide();
+    $("#phaseButton").hide();
   }
 }
 

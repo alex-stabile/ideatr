@@ -23,8 +23,7 @@
 <!-- The hangout API JavaScript. Always include this first -->
 <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 
-<!-- The JavaScript for this app. This must always be a full URL not a
-     relative path.
+<!-- The JavaScript for this app. This must always be a full URL, not a relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
 <script src="//ideatr2472.appspot.com/static/jquery.js"></script>
@@ -55,47 +54,10 @@
     <dl>
       <div id="ideasPane">
         <dd id="initialMessage">YOUR IDEAS WILL APPEAR HERE. COME UP WITH AS MANY AS YOU CAN!</dd>
-        <ul id="ideasList1" class="ideasPaneList">
-        </ul>
       </div>
       <dd id="participants"></dd>
     </dl>
   </div>
-
-<!--
-
-  <div id="categoryAndNotes" style="visibility: hidden;">
-    <div id="categoryPanel" style="height: 175px; border-bottom: 1px solid #EEE; overflow: auto; padding-left:15px; padding-right: 15px;">
-      <p id="currentIdea" style="text-align: center;"></p>
-      <p class="sideBarHeader" style="float:left;">Categories </p><input style="float: right; margin-top: 5px;" type=button value="Sort Ideas" id="sortButton"
-          onClick="sortButtonClick()"/>
-          <div style="clear: both;"></div>
-        <ol>
-          <li class="bigIdea1" id="category1Key"><input type=text id="category1" onkeydown="if (event.keyCode == 13) document.getElementById('category1Button').click()"><input type=button value="Add" id="category1Button"
-          onClick="categoryButton1Click()"/></li>
-          <li class="bigIdea2" id="category2Key"><input type=text id="category2" onkeydown="if (event.keyCode == 13) document.getElementById('category2Button').click()"><input type=button value="Add" id="category2Button"
-          onClick="categoryButton2Click()"/></li>
-          <li class="bigIdea3" id="category3Key"><input type=text id="category3" onkeydown="if (event.keyCode == 13) document.getElementById('category3Button').click()"><input type=button value="Add" id="category3Button"
-          onClick="categoryButton3Click()"/></li>
-          <li class="bigIdea4" id="category4Key"><input type=text id="category4" onkeydown="if (event.keyCode == 13) document.getElementById('category4Button').click()"><input type=button value="Add" id="category4Button"
-          onClick="categoryButton4Click()"/></li>
-          <li class="bigIdea5" id="category5Key"><input type=text id="category5" onkeydown="if (event.keyCode == 13) document.getElementById('category5Button').click()"><input type=button value="Add" id="category5Button"
-          onClick="categoryButton5Click()"/></li>
-          <li class="bigIdea6" id="category6Key"><input type=text id="category6" onkeydown="if (event.keyCode == 13) document.getElementById('category6Button').click()"><input type=button value="Add" id="category6Button"
-          onClick="categoryButton6Click()"/></li>
-        </ol>
-    </div>
-    <div id="notePanel" style="height: 160px; padding-left: 15px; padding-right: 15px; overflow: auto;">
-      <p class="sideBarHeader">Notes</p>
-      <div id="noteDisplay" style="overflow: auto; height: 80px;"></div>
-      <input type=text id="noteInputField" onkeydown="if (event.keyCode == 13) document.getElementById('addNoteButton').click()">
-      <input type=button value="Add Note" id="addNoteButton"
-          onClick="addNoteButtonClick()"/>
-    </div>
-  </div>
-
--->
-
 </div>
 
 <div style="clear: both;"></div>
