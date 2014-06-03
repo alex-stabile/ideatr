@@ -24,6 +24,9 @@ var forbiddenCharacters = '<>';
 var numMoveOnVotes = 0;
 var userHasVotedToContinue = false;
 
+/*
+ * Note that phase changes rely on Messages in this version, rather than on State updates -- may be unreliable
+ */
 function phaseButtonClick() {
   numMoveOnVotes++;
   userHasVotedToContinue = true;
