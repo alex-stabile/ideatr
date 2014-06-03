@@ -28,6 +28,22 @@
 	font-size: 160%;
 }
 
+.userAlert {
+	color: red;
+	font-size: 80%;
+	width: 300px;
+}
+#userInputAlert {
+	padding-bottom: 5px;
+	padding-top: 1px;
+}
+#userPhaseAlert {
+	padding-bottom: 5px;
+}
+
+#inputArea {
+}
+
 /*
  * These sections ensure lists wrap text/columns properly
  */
@@ -40,18 +56,19 @@
 }
 
 .ideasPaneList {
-	width: 250px;
+	width: 150px;
 	height: 0px;
 	display: inline-block;
 }
 
 .idea {
 	/* border: solid 1px red; */
-	height: 30px;
-	/*width: 250px;*/
 	display: inline-block;
 	float: left;
 }
+/*
+ *
+ */
 
 .ui-draggable-disabled {
 	opacity: 0.4;
@@ -79,21 +96,6 @@
 	margin-right: auto;
 	margin-bottom: 0px;
 	margin-top: 5px;
-}
-
-.sideBarHeader {
-	margin-bottom: 2px;
-	margin-top: 5px;
-}
-
-#categoryAndNotes ul {
-	margin-top: 0px;
-	margin-bottom: 0px;
-}
-
-#categoryAndNotes ol {
-	margin-top: 0px;
-	margin-bottom: 0px;
 }
 
 h1 { 

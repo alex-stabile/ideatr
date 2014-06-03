@@ -35,17 +35,22 @@
 <h1 id="title">Phase 1: Brainstorm</h1>
 <div id="tipBox"></div>
 <div style="padding-right: 10px; position: absolute; top: 20px; right: 20px;">
-    <ul>
+    <div id="inputArea">
       <input type=text id="inputField" onkeydown="if (event.keyCode == 13) document.getElementById('addIdeaButton').click()">
       <input type=button value="Add Idea" id="addIdeaButton"
           onClick="addIdeaButtonClick()"/>
-    </ul>
-    <ul>
+    </div>
+    <div id="userInputAlert" class="userAlert">
+      This is a sample user input alert!
+    </div>
+    <div>
       Participants: <span id="participants"></span>
       <input type=button value="Next (Discuss)" id="phaseButton"
           onClick="phaseButtonClick()"/>
       <input type=button value="Start Over" id="startOverButton" onClick="startOverButtonClick()"/>
-    </ul>
+    </div>
+    <div id="userPhaseAlert" class="userAlert">
+    </div>
   </div>
 </div>
 

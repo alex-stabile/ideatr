@@ -20,6 +20,7 @@ var voteCap = 5;
 var userHasVoted = false;
 
 var draggingIdeaId = null;
+var forbiddenCharacters = '<>';
 
 function phaseButtonClick() {
   if (!confirm("You are attempting to move to the next phase of the brainstorming process -- make sure the rest of your group is ready first! Press OK to move to the next phase.")) {
@@ -83,10 +84,23 @@ function addIdeaButtonClick() {
   console.log('Add idea button clicked.');
 
   var newText = document.getElementById('inputField').value;
-  /* sanitize? */
+  if ( newText.length === 0 ) return;
+  /* Sanitize input */
+  for ( var i = 0; i < forbiddenCharacters.length; i++ ) {
+    if ( newText.indexOf( forbiddenCharacters[i] ) > -1 ) {
+      //alert('Your idea may not include any of the following characters: ' + forbiddenCharacters);
+      $('#userInputAlert').html('Your idea may not include any of the following characters: ' + forbiddenCharacters);
+      return;
+    }
+  }
   document.getElementById('inputField').value = '';
 
   var ideasList = getArrayFromState( 'ideas' );
+  if ( ideasList.indexOf( newText ) > -1 ) {
+    $('#userInputAlert').html('That idea has already been added!');
+    return;
+  }
+  $('#userInputAlert').empty();
   ideasList.push( newText );
   console.log('New ideas list is: ' + ideasList);
 
@@ -120,7 +134,8 @@ function addIdeaButtonClick() {
       console.log('\tMaking the new idea draggable');
       $( ideaSelector ).draggable({
         start: dragStart,
-        stop: dragStop
+        stop: dragStop,
+        containment: $('#ideasPane')
       });
     }
   }
@@ -193,8 +208,6 @@ function addNoteButtonClick() {
 }
 */
 
-// var forbiddenCharacters = /[^a-zA-Z!0-9_\- ]/;
-var forbiddenCharacters = "";
 function setText(element, text) {
   element.innerHTML = typeof text === 'string' ?
       text.replace(forbiddenCharacters, '') :
@@ -347,7 +360,8 @@ function updateIdeasPane( newHtmlStr, phase ) {
     console.log('Making everything draggable');
     $( '.idea' ).draggable({
       start: dragStart,
-      stop: dragStop
+      stop: dragStop,
+      containment: $('#ideasPane')
     });
   }
 }
@@ -385,7 +399,7 @@ function updateStateUi(state) {
     topBar.style.backgroundColor = "#CAE1FF";
     var tipBox = document.getElementById('tipBox');
     if (!state['ideas']) {
-      tipBox.innerHTML = 'Add as many ideas as you can, as quickly as you can! --->';
+      tipBox.innerHTML = 'Add as many ideas as you can, as quickly as you can!';
     } else {
       if (!state['prompt']) {
         tipBox.innerHTML = 'Need help? <input type=button value="Get a prompt" id="promptButton" onClick="promptButtonClick()"/>';
