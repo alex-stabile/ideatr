@@ -25,7 +25,7 @@ var numMoveOnVotes = 0;
 var userHasVotedToContinue = false;
 
 /*
- * Note that phase changes rely on Messages in this version, rather than on State updates -- may be unreliable
+ * Note that phase changes use the State this version
  */
 function phaseButtonClick() {
   numMoveOnVotes++;
